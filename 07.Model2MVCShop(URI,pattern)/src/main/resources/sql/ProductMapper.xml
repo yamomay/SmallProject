@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="euc-kr"?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		
+<mapper namespace="ProductMapper">
+
+	<resultMap id="productSelectMap" type="product">
+  		<result property="prodNo" column="prod_no" jdbcType="NUMERIC"/>
+  		<result property="prodName" column="prod_name" jdbcType="VARCHAR"/>
+  		<result property="prodDetail" column="prod_detail" jdbcType="VARCHAR"/>
+  		<result property="manuDate" column="manufacture_day" jdbcType="VARCHAR"/>
+  		<result property="price" column="price" jdbcType="NUMERIC"/>
+  		<result property="regDate" column="reg_date" jdbcType="DATE"/>
+  		<result property="proTranCode" column="tran_status_code" jdbcType="VARCHAR"/>
+  		<result property="likes" column="likes" jdbcType="NUMERIC"/>
+  	</resultMap>
+  	
+  	
+  	<insert id ="addProduct" parameterType="product">
+  		INSERT
+  		INTO product(prod_no,
+  					 prod_name,
+  					 prod_detail,
+  					 manufacture_day,
+  					 price,
+  					 reg_date
+  					 )
+	  		 VALUES(SEQ_PRODUCT_PROD_NO.nextval,
+	  				#{prodName:VARCHAR},
+	  				#{prodDetail:VARCHAR},
+	  				to_date(#{manuDate:VARCHAR}, 'yy/mm/dd'),
+	  				#{price:NUMERIC},
+	  				to_char(sysdate, 'yyyymmdd') )
+  	</insert>
+  	
+	<select id="findProduct" parameterType="int" resultMap="productSelectMap">  
+		SELECT
+		p.prod_no,
+		p.prod_name,
+		p.prod_detail,
+		p.manufacture_day, 
+		p.price, 
+		p.reg_date, 
+		NVL((COUNT(l.likes)),0) as likes,
+		NVL(t.tran_status_code,0) as tran_status_code
+		from product p, transaction t, likes l
+		WHERE p.prod_no = t.prod_no(+) AND p.prod_no = l.prod_no(+) AND p.prod_no = #{value}
+		GROUP BY p.prod_no, p.prod_name, p.prod_detail, p.manufacture_day, p.price, p.reg_date, t.tran_status_code, l.likes
+	</select>
+  	
+  	<update id="updateProduct" parameterType="product">
+  		UPDATE product 
+  		SET
+  		prod_name=#{prodName:VARCHAR},
+  		prod_detail=#{prodDetail:VARCHAR},
+  		manufacture_day=#{manuDate:DATE},
+  		price=#{price:NUMERIC}
+  		WHERE
+  		prod_no = #{prodNo}
+  	</update>
+  	
+  	<insert id="likeProduct" parameterType="hashmap">
+	  	INSERT
+	  	INTO likes(user_id, likes, prod_no)
+	  	VALUES(#{userId},1,#{prodNo})
+  	</insert>
+  	
+  	<select id="checkLike" parameterType="hashmap" resultType="string">
+	  	SELECT COUNT(likes)
+	  	FROM likes
+	  	WHERE user_id=#{userId} AND prod_no=#{prodNo}
+  	</select>
+  	
+  	<select id="listProduct" parameterType="com.model2.mvc.common.Search" resultMap="productSelectMap">
+  		SELECT*
+  		FROM (SELECT inner_table.*,ROWNUM row_seq
+  		FROM (SELECT
+	  		p.prod_no, 
+	  		p.prod_name, 
+	  		p.prod_detail, 
+	  		p.manufacture_day, 
+	  		p.price, 
+	  		p.reg_date, 
+	  		t.tran_status_code, 
+	  		COUNT(l.likes) as likes
+	  		FROM likes l, product p, transaction t
+	  		WHERE p.prod_no = t.prod_no(+) AND p.prod_no = l.prod_no(+) 
+	  		<if test="searchCondition!=null and searchKeyword!=null and !searchKeyword.equals('')">
+	  			<if test="searchCondition==0">
+	  					AND p.prod_no LIKE '%${searchKeyword}%' 
+	  				</if>
+	  				<if test="searchCondition==1">
+	  					AND p.prod_name LIKE '%${searchKeyword}%'
+	  				</if>
+	  				<if test="searchCondition==2">
+	  					AND p.price LIKE '%${searchKeyword}%'
+	  				</if>
+	  		</if>
+	  		GROUP BY p.prod_no, p.prod_name, p.prod_detail, p.manufacture_day, p.price, p.reg_date, t.tran_status_code, l.likes
+	  		<if test="order!=null and !order.equals('')">
+	  			<if test="order.equals('prod_name')">
+	  				ORDER BY prod_name
+	  			</if>
+	  			<if test="order.equals('reg_date')">
+	  				ORDER BY reg_date DESC
+	  			</if>
+	  			<if test="order.equals('price')">
+	  				ORDER BY price DESC
+	  			</if>
+	  		</if>
+	  		<if test="order == null or order.equals('')">
+	  			ORDER BY prod_no
+	  		</if>
+	  		) inner_table
+	  		<![CDATA[WHERE ROWNUM <= #{currentPage}*${pageSize})]]>
+  		WHERE row_seq BETWEEN (#{currentPage}-1)*#{pageSize}+1 AND (#{currentPage}*${pageSize})
+  	</select>
+  	
+  	<select id="count" parameterType="com.model2.mvc.common.Search" resultType="string">
+  		SELECT COUNT(*)
+  		FROM (SELECT
+	  		p.prod_no, 
+	  		p.prod_name, 
+	  		p.prod_detail, 
+	  		p.manufacture_day, 
+	  		p.price, 
+	  		p.reg_date, 
+	  		t.tran_status_code, 
+	  		COUNT(l.likes) as likes
+	  		FROM likes l, product p, transaction t
+	  		WHERE p.prod_no = t.prod_no(+) AND p.prod_no = l.prod_no(+) 
+	  		<if test="searchCondition!=null and searchKeyword!=null and !searchKeyword.equals('')">
+  				<if test="searchCondition==0">
+  					AND prod_no LIKE '%${searchKeyword}%' 
+  				</if>
+  				<if test="searchCondition==1">
+  					AND prod_name LIKE '%${searchKeyword}%'
+  				</if>
+  				<if test="searchCondition==1">
+  					AND price LIKE '%${searchKeyword}%'
+  				</if>
+	  		</if>
+	  		GROUP BY p.prod_no, p.prod_name, p.prod_detail, p.manufacture_day, p.price, p.reg_date, t.tran_status_code, l.likes
+	  		<if test="order!=null and !order.equals('')">
+	  			<if test="order.equals('prod_name')">
+	  				ORDER BY prod_name
+	  			</if>
+	  			<if test="!order.equals('prod_name')">
+	  				ORDER BY #{order} DESC
+	  			</if>
+	  		</if>
+	  		<if test="order == null or order.equals('')">
+	  			ORDER BY prod_no
+	  		</if>
+	  		) countTable	
+  	</select>
+  	
+</mapper>
+
+
+

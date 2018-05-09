@@ -29,7 +29,7 @@
 		          		<!-- //////////////////////////////////////////////////////////////////////////////////// 
 		              <a href="/loginView.do" target="rightFrame">login</a>
 		              	////////////////////////////////////////////////////////////////////////////////////////// -->
-		              <a href="/user/login" target="rightFrame">login</a>	
+		              <a href="/user/loginView" target="rightFrame">login</a>	
 		              
 		           </c:if>   
 	          </td>

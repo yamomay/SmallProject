@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="euc-kr"?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		
+<mapper namespace="PurchaseMapper">
+
+	<resultMap id="purchaseSelectMap" type="purchase">
+  		<result property="divyAddr" column="demailaddr" jdbcType="VARCHAR"/>
+  		<result property="divyDate" column="dlvy_date" jdbcType="DATE"/>
+  		<result property="divyRequest" column="dlvy_request" jdbcType="VARCHAR"/>
+  		<result property="orderDate" column="order_data" jdbcType="DATE"/>
+  		<result property="paymentOption" column="payment_option" jdbcType="VARCHAR"/>
+  		<result property="receiverName" column="receiver_name" jdbcType="VARCHAR"/>
+  		<result property="receiverPhone" column="receiver_phone" jdbcType="VARCHAR"/>
+  		<result property="tranCode" column="tran_status_code" jdbcType="CHAR"/>
+  		<result property="tranNo" column="tran_no" jdbcType="NUMERIC"/>
+  		
+  		<association property="buyer"  javaType="user">
+			<id property="userId" column="buyer_id" jdbcType="VARCHAR"/>
+			<result property="userName" column="user_name" jdbcType="VARCHAR"/>
+			<result property="phone" column="cell_phone" jdbcType="VARCHAR"/>
+		</association>
+		
+		<association property="purchaseProd"  javaType="product">
+			<id property="prodNo" column="prod_no" jdbcType="NUMERIC"/>
+			<result property="prodName" column="prod_name" jdbcType="VARCHAR"/>
+			<result property="prodDetail" column="prod_detail" jdbcType="VARCHAR"/>
+			<result property="manuDate" column="manufacture_day" jdbcType="VARCHAR"/>
+			<result property="price" column="price" jdbcType="NUMERIC"/>
+			<result property="regDate" column="reg_date" jdbcType="DATE"/>
+		</association>	
+		
+  	</resultMap>
+  	
+  	<insert id="insertPurchase" parameterType="purchase">
+  		INSERT INTO transaction
+  		(tran_no, 
+  		prod_no, 
+  		buyer_id, 
+  		payment_option, 
+  		receiver_name, 
+  		receiver_phone, 
+  		demailaddr,
+  		dlvy_request, 
+  		tran_status_code, 
+  		order_data, 
+  		dlvy_date)
+  		VALUES
+  		(seq_transaction_tran_no.nextval,
+  		#{purchaseProd.prodNo},
+  		#{buyer.userId},
+  		#{paymentOption},
+  		#{receiverName:VARCHAR},
+  		#{receiverPhone:VARCHAR},
+  		#{divyAddr:VARCHAR},
+  		#{divyRequest:VARCHAR},
+  		#{tranCode:CHAR},
+  		TO_CHAR(SYSDATE,'yy/mm/dd'),
+  		TO_date(#{divyDate:DATE}, 'yy/mm/dd'))
+  	</insert>
+  	
+  	<select id="getSaleList" parameterType="com.model2.mvc.common.Search" resultMap="purchaseSelectMap">
+  		SELECT*
+  		FROM (SELECT inner_table.*,ROWNUM row_seq
+  		FROM (SELECT
+  		ROWNUM r,
+  		p.prod_name,
+  		u.user_id,
+  		u.user_name,
+  		t.buyer_id,
+  		t.receiver_name,
+  		t.receiver_phone,
+  		t.tran_status_code,
+  		p.prod_no,
+  		t.tran_no
+  		FROM product p,transaction t, users u
+  		WHERE
+  		p.prod_no = t.prod_no(+) AND u.user_id = t.buyer_id AND u.user_id = #{searchKeyword}) inner_table
+	  	<![CDATA[WHERE ROWNUM <= #{currentPage}*${pageSize})]]>
+  		WHERE row_seq BETWEEN (#{currentPage}-1)*#{pageSize}+1 AND (#{currentPage}*${pageSize})
+  	</select>
+  	
+  	<select id="count" parameterType="string" resultType="int">
+  		SELECT COUNT(*)
+  		FROM (SELECT
+  		ROWNUM r,
+  		p.prod_name,
+  		u.user_id,
+  		t.buyer_id,
+  		t.receiver_name,
+  		t.receiver_phone,
+  		t.tran_status_code,
+  		p.prod_no,
+  		t.tran_no
+  		FROM product p,transaction t, users u
+  		WHERE
+  		p.prod_no = t.prod_no(+) AND u.user_id = t.buyer_id AND u.user_id = #{searchKeyword}) countTable
+  	</select>
+  	
+  	<select id="getPurchase" parameterType="int" resultMap="purchaseSelectMap">
+  		SELECT
+  		t.tran_no,
+  		p.prod_no,
+  		p.prod_name,
+  		p.prod_detail,
+  		p.price,
+  		p.reg_date,
+  		t.payment_option,
+  		t.receiver_name,
+  		t.receiver_phone,
+  		t.demailaddr,
+  		t.dlvy_request,
+  		t.order_data,
+  		t.dlvy_date,
+  		t.tran_status_code
+  		FROM transaction t, product p, users u
+  		WHERE t.prod_no = p.prod_no AND tran_no = #{value}
+  	</select>
+  	
+  	<select id="getDiscount" parameterType="String" resultType="hashmap">
+  		SELECT
+  		coupon
+  		FROM coupon
+  		WHERE user_id = #{value}
+  	</select>
+  	
+  	<update id="updateTranCode" parameterType="purchase">
+  		UPDATE transaction
+  		SET tran_status_code = #{tranCode}
+  		WHERE prod_no = #{purchaseProd.prodNo}
+  	</update>
+  	
+  	<update id="updatePurchase" parameterType="purchase">
+  		UPDATE transaction
+  		SET
+  		payment_option = #{paymentOption:VARCHAR},
+  		receiver_name = #{receiverName:VARCHAR},
+  		receiver_phone = #{receiverPhone:VARCHAR},
+  		demailaddr = #{divyAddr:VARCHAR},
+  		dlvy_request = #{divyRequest:VARCHAR},
+  		dlvy_date = TO_DATE(#{divyDate:DATE}, 'yy/mm/dd')
+  		WHERE tran_no = #{tranNo}
+  	</update>
+  	
+  	<select id="getPurchase2" parameterType="int" resultMap="purchaseSelectMap">
+  		SELECT
+  		t.tran_no,
+  		p.prod_no,
+  		p.prod_name,
+  		p.prod_detail,
+  		p.price,
+  		p.reg_date,
+  		t.payment_option,
+  		t.receiver_name,
+  		t.receiver_phone,
+  		t.demailaddr,
+  		t.dlvy_request,
+  		t.order_data,
+  		t.dlvy_date,
+  		t.tran_status_code
+  		FROM transaction t, product p
+  		WHERE t.prod_no = p.prod_no AND p.prod_no = #{value}
+  	</select>
+  	
+</mapper>
+
+
+

@@ -63,4 +63,17 @@ public class UserServiceImpl implements UserService{
 		}
 		return result;
 	}
+
+	@Override
+	public void giveCoupon(String userId, String couponNo) throws Exception {
+		// TODO Auto-generated method stub
+		System.out.println("giveCoupon service µé¾î¿È");
+		userDao.giveCoupon(userId, couponNo);
+	}
+
+	@Override
+	public List<String> checkCoupon(String userId) throws Exception {
+		// TODO Auto-generated method stub
+		return userDao.checkCoupon(userId);
+	}
 }

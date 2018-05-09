@@ -1,5 +1,6 @@
 package com.model2.mvc.web.user;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.model2.mvc.common.Page;
 import com.model2.mvc.common.Search;
@@ -43,17 +45,26 @@ public class UserController {
 	int pageSize;
 	
 	
-	//@RequestMapping("/addUserView.do")
-	//public String addUserView() throws Exception {
-	@RequestMapping( value="addUser", method=RequestMethod.GET )
-	public String addUser() throws Exception{
+	
+	@RequestMapping(value="giveCoupon")
+	public ModelAndView giveCoupon(@RequestParam("currentPage") String currentPage, @RequestParam("userId") String userId,@RequestParam("userName") String userName,@RequestParam("coupon") String couponNo) throws Exception {
+		ModelAndView model = new ModelAndView();
+		System.out.println("들어온 userId = "+userId);
+		System.out.println("들어온 userName = "+userName);
+		System.out.println("들어온 couponNo = "+couponNo);
+		userService.giveCoupon(userId, couponNo);
+		model.setViewName("redirect:/user/listUser?currentPage="+currentPage);
+		return model;
+	}
+	
+	@RequestMapping( value="addUserView", method=RequestMethod.GET )
+	public String addUserView() throws Exception{
 	
 		System.out.println("/user/addUser : GET");
 		
 		return "redirect:/user/addUserView.jsp";
 	}
 	
-	//@RequestMapping("/addUser.do")
 	@RequestMapping( value="addUser", method=RequestMethod.POST )
 	public String addUser( @ModelAttribute("user") User user ) throws Exception {
 
@@ -64,8 +75,7 @@ public class UserController {
 		return "redirect:/user/loginView.jsp";
 	}
 	
-	//@RequestMapping("/getUser.do")
-	@RequestMapping( value="getUser", method=RequestMethod.GET )
+	@RequestMapping(value="getUser")
 	public String getUser( @RequestParam("userId") String userId , Model model ) throws Exception {
 		
 		System.out.println("/user/getUser : GET");
@@ -77,10 +87,8 @@ public class UserController {
 		return "forward:/user/getUser.jsp";
 	}
 	
-	//@RequestMapping("/updateUserView.do")
-	//public String updateUserView( @RequestParam("userId") String userId , Model model ) throws Exception{
-	@RequestMapping( value="updateUser", method=RequestMethod.GET )
-	public String updateUser( @RequestParam("userId") String userId , Model model ) throws Exception{
+	@RequestMapping(value="updateUserView")
+	public String updateUserView( @RequestParam("userId") String userId , Model model ) throws Exception{
 
 		System.out.println("/user/updateUser : GET");
 		//Business Logic
@@ -91,8 +99,7 @@ public class UserController {
 		return "forward:/user/updateUser.jsp";
 	}
 	
-	//@RequestMapping("/updateUser.do")
-	@RequestMapping( value="updateUser", method=RequestMethod.POST )
+	@RequestMapping(value="updateUser")
 	public String updateUser( @ModelAttribute("user") User user , Model model , HttpSession session) throws Exception{
 
 		System.out.println("/user/updateUser : POST");
@@ -103,23 +110,20 @@ public class UserController {
 		if(sessionId.equals(user.getUserId())){
 			session.setAttribute("user", user);
 		}
-		
-		//return "redirect:/getUser.do?userId="+user.getUserId();
+
 		return "redirect:/user/getUser?userId="+user.getUserId();
 	}
 	
-	//@RequestMapping("/loginView.do")
-	//public String loginView() throws Exception{
-	@RequestMapping( value="login", method=RequestMethod.GET )
-	public String login() throws Exception{
+	@RequestMapping(value="loginView")
+	public String loginView() throws Exception{
 		
 		System.out.println("/user/logon : GET");
 
 		return "redirect:/user/loginView.jsp";
 	}
 	
-	//@RequestMapping("/login.do")
-	@RequestMapping( value="login", method=RequestMethod.POST )
+
+	@RequestMapping(value="login")
 	public String login(@ModelAttribute("user") User user , HttpSession session ) throws Exception{
 		
 		System.out.println("/user/login : POST");
@@ -133,9 +137,8 @@ public class UserController {
 		return "redirect:/index.jsp";
 	}
 	
-	//@RequestMapping("/logout.do")
-	@RequestMapping( value="logout", method=RequestMethod.GET )
-	public String logout(HttpSession session ) throws Exception{
+	@RequestMapping(value="logout")
+	public String logout(HttpSession session) throws Exception{
 		
 		System.out.println("/user/logout : POST");
 		
@@ -145,8 +148,7 @@ public class UserController {
 	}
 	
 	
-	//@RequestMapping("/checkDuplication.do")
-	@RequestMapping( value="checkDuplication", method=RequestMethod.POST )
+	@RequestMapping(value="checkDuplicaion")
 	public String checkDuplication( @RequestParam("userId") String userId , Model model ) throws Exception{
 		
 		System.out.println("/user/checkDuplication : POST");
@@ -159,13 +161,13 @@ public class UserController {
 		return "forward:/user/checkDuplication.jsp";
 	}
 	
-	//@RequestMapping("/listUser.do")
-	@RequestMapping( value="listUser" )
+	@RequestMapping(value="listUser")
 	public String listUser( @ModelAttribute("search") Search search , Model model , HttpServletRequest request) throws Exception{
 		
-		System.out.println("/user/listUser : GET / POST");
-		
-		if(search.getCurrentPage() ==0 ){
+		System.out.println("/listUser");
+		System.out.println("CurrentPage : "+search.getCurrentPage());
+		System.out.println("URL : "+request.getRequestURL());
+		if(search.getCurrentPage() == 0 ){
 			search.setCurrentPage(1);
 		}
 		search.setPageSize(pageSize);
@@ -180,6 +182,35 @@ public class UserController {
 		model.addAttribute("list", map.get("list"));
 		model.addAttribute("resultPage", resultPage);
 		model.addAttribute("search", search);
+		
+		// Coupon 처리를 위한 값 보내기
+		if (request.getParameter("coupon") != null) {
+			System.out.println("coupon user값 저장 들어오는 유무확인");
+			System.out.println("들어온 userId = "+request.getParameter("userId"));
+			System.out.println("들어온 userName = "+request.getParameter("userName"));
+			List<String> list = userService.checkCoupon(request.getParameter("userId"));
+			System.out.println("list 목록 = "+list);
+			model.addAttribute("currentPage", search.getCurrentPage());
+			model.addAttribute("couponNo", list);
+			if (list.size()==0) {
+				System.out.println("list의 갯수가 0");
+				String url = "'../user/coupon.jsp?userId="+request.getParameter("userId")+"&userName="+request.getParameter("userName")+"&currentPage="+request.getParameter("currentPage")+"&couponNo1=0&couponNo2=0&couponNo3=0'";
+				model.addAttribute("couponUrl", url);
+				model.addAttribute("couponNo", "yes");
+			}else if(list.size() == 1){
+				System.out.println("list의 갯수가 1");
+				model.addAttribute("couponUrl", "'../user/coupon.jsp?userId="+request.getParameter("userId")+"&userName="+request.getParameter("userName")+"&currentPage="+request.getParameter("currentPage")+"&couponNo1="+list.get(0)+"&couponNo2=0&couponNo3=0'");				
+				model.addAttribute("couponNo", "yes");
+			}else if(list.size() == 2){
+				System.out.println("list의 갯수가 2");
+				model.addAttribute("couponUrl", "'../user/coupon.jsp?userId="+request.getParameter("userId")+"&userName="+request.getParameter("userName")+"&currentPage="+request.getParameter("currentPage")+"&couponNo1="+list.get(0)+"&couponNo2="+list.get(1)+"&couponNo3=0'");				
+				model.addAttribute("couponNo", "yes");
+			}else if(list.size() == 3){
+				System.out.println("list의 갯수가 3");
+				model.addAttribute("couponUrl", "'../user/coupon.jsp?userId="+request.getParameter("userId")+"&userName="+request.getParameter("userName")+"&currentPage="+request.getParameter("currentPage")+"&couponNo1="+list.get(0)+"&couponNo2="+list.get(1)+"&couponNo3="+list.get(2)+"'");				
+				model.addAttribute("couponNo", "yes");
+			}
+		}
 		
 		return "forward:/user/listUser.jsp";
 	}

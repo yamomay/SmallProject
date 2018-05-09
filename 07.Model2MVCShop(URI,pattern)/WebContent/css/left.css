@@ -67,6 +67,7 @@ BODY, TABLE, TR, TD, SELECT,INPUT,DIV,SPAN,FORM,TEXTAREA
 	color: #505050;
 	font-weight:normal;
 	text-indent: 14px;
+	padding: 10px;
 	background-image: url(/sample/images/left/leftMenuDep03Bg.gif);
 	background-repeat:no-repeat;
  	}

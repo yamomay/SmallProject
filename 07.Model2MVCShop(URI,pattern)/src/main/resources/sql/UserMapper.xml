@@ -17,6 +17,7 @@
 		<result property="addr" 				column="addr" 					jdbcType="VARCHAR" />
 		<result property="email" 			column="email" 				jdbcType="NUMERIC"  />
 		<result property="regDate" 		column="reg_date" 			jdbcType="DATE" />
+		<result property="coupon"		column="coupon"			jdbcType="NUMERIC"/>
 	</resultMap>
 	
 	<!-- SQL : INSERT -->
@@ -25,6 +26,12 @@
 		INTO users( user_id , user_name , password , role , ssn, cell_phone, addr, email , reg_date) 
 		VALUES	 (	#{userId} , #{userName} , #{password} , 'user' , #{ssn:VARCHAR} , 
 							#{phone:VARCHAR} , #{addr:VARCHAR} , #{email:VARCHAR} , SYSDATE )
+	 </insert>
+	 
+	 <insert id="giveCoupon" parameterType="hashMap">
+	 	INSERT
+	 	INTO coupon(user_id, coupon)
+	 	VALUES (#{userId},#{couponNo})
 	 </insert>
 	 
 	 <!-- SQL : SELECT ONE -->
@@ -66,6 +73,13 @@
 											ORDER BY user_id ) inner_table
 						WHERE ROWNUM &lt;= #{endRowNum} )
 		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+	 </select>
+	 
+	 <select id="checkCoupon" parameterType="String" resultType="String">
+	 	SELECT coupon
+	 	FROM coupon
+		WHERE user_id=#{value}
+		ORDER BY coupon
 	 </select>
 	 	<!--  위 두번째 subQuery 의  
 	 			WHERE ROWNUM &lt;= #{endRowNum} ) 는

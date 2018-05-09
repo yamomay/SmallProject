@@ -43,14 +43,9 @@ function fncAddUser() {
 	} else {
 		document.detailForm.phone.value = "";
 	}
-	
-	/////////////////////////////////////////////////////////////////////////////////
-	//document.detailForm.action='/addUser.do';
-	/////////////////////////////////////////////////////////////////////////////////
+		
 	document.detailForm.action='/user/addUser';
-	
 	document.detailForm.submit();
-	
 }
 
 function check_email(frm) {

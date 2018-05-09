@@ -20,6 +20,7 @@ public class User {
 	private String phone1;
 	private String phone2;
 	private String phone3;
+	private int coupon;
 
 	
 	
@@ -103,5 +104,13 @@ public class User {
 	public String toString() {
 		return "UserVO : [userId] "+userId+" [userName] "+userName+" [password] "+password+" [role] "+ role
 			+" [ssn] "+ssn+" [phone] "+phone+" [email] "+email+" [regDate] "+regDate;
+	}
+
+	public int getCoupon() {
+		return coupon;
+	}
+
+	public void setCoupon(int coupon) {
+		this.coupon = coupon;
 	}
 }
